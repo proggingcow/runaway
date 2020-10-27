@@ -1,4 +1,5 @@
 import pygame,math
+from random import randrange
 pygame.font.init()
 #r,g,b
 
@@ -126,7 +127,7 @@ def game():
 
         if not pause:
             score += 0.05
-            tbne -= 0.05
+            tbne -= 0.5
         # Handle Events
         for event in pygame.event.get():
             if event.type == pygame.QUIT: # Checks if the red button in the corner of the window is clicked
@@ -160,7 +161,7 @@ def game():
                     me.speedx = -9
                 if me.speedy < -9:
                     me.speedy = -9
-        if tbne == 0:
+        if tbne <= 0:
             obs = obs + [Butcher(randrange(1,30),randrange(1,30),randrange(1,3),randrange(1,3))]
             tbne = 100
         # timestep

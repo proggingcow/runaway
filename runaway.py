@@ -1,10 +1,16 @@
 import pygame,math
 pygame.font.init()
-
+#r,g,b
 
 from enum import Enum
 
-cow_img = pygame.image.load("assets/cowontherun.png")
+
+pic_cow_run = pygame.image.load("assets/cowontherun.png")
+pic_cow_hurt =pygame.image.load("assets/hurtcowontherun.png")
+pic_butcher= pygame.image.load("assets/butcher.png")
+background = pygame.image.load("assets/background.png")
+
+
 
 
 class MenuJob(Enum):
@@ -25,9 +31,8 @@ def overlap(a,b):
     return True
 
 class MyOb:
-    def __init__(self,x,y,col,speedx,speedy):
+    def __init__(self,x,y,speedx,speedy):
         self.r = pygame.Rect(x,y,100,100)
-        self.col = col
         self.speedx = speedx
         self.speedy = speedy
 
@@ -40,27 +45,36 @@ class MyOb:
         if self.r.left < 0: self.speedx = self.speedx * -1
         if self.r.bottom > world.width: self.speedy = self.speedy * -1
         if self.r.top < 0: self.speedy =  self.speedy * -1
+
     def move(self,x,y):
         self.r = self.r.move(x,y)
 
 class Person(MyOb):
     def __init__(self,x,y):
-        super().__init__(x,y,(0,0,0),3,3)
-        self.r = cow_img.get_rect()
+        super().__init__(x,y,3,3)
+        self.r = pic_cow_run.get_rect()
         self.r = self.r.move(100,400)
+        self.col = (155,0,0)
+        self.invun = 0
 
-
-
-    def time_step(self, world):
-        self.move(self.speedx,self.speedy)
-        if self.r.right > world.width: self.speedx = self.speedx * -1
-        if self.r.left < 0: self.speedx = self.speedx * -1
-        if self.r.bottom > world.width: self.speedy = self.speedy * -1
-        if self.r.top < 0: self.speedy =  self.speedy * -1
 
     def draw(self,screen):
+        if self.invun > 0:
+            screen.blit(pic_cow_hurt,self.r)
+        else:
+            screen.blit(pic_cow_run,self.r)
 
-        screen.blit(cow_img,self.r)
+class Butcher(MyOb):
+    def __init__(self,x,y,speedx,speedy):
+        super().__init__(x,y,speedx,speedy)
+        self.r = pic_butcher.get_rect().move(x,y)
+
+
+    def draw(self,screen):
+        screen.blit(pic_butcher,self.r)
+
+
+
 
 
 
@@ -68,6 +82,8 @@ class World:
     def __init__(self,width,hight):
         self.width = width
         self.hight = hight
+    def draw(self,screen):
+        screen.blit(background,(0,0))
 
 
 def text_objects(text, font):
@@ -96,18 +112,21 @@ pygame.display.set_caption("runaway")
 
 def game():
     wor = World(500,500)
-    obs = [MyOb(30,30,(0,0,0),1,3), MyOb(0,100,(155,255,0),2,2),MyOb(300,0,(255,0,0),3,2)]
+    obs = [Butcher(30,30,1,3), Butcher(0,100,2,2),Butcher(300,0,3,2)]
     me = Person(400,400)
     pause = False
     score = 0
     HP = 3
     invun = 0
-
+    tbne = 100
     run = True
     while run:
         pygame.time.delay(50)
+
+
         if not pause:
             score += 0.05
+            tbne -= 0.05
         # Handle Events
         for event in pygame.event.get():
             if event.type == pygame.QUIT: # Checks if the red button in the corner of the window is clicked
@@ -141,7 +160,9 @@ def game():
                     me.speedx = -9
                 if me.speedy < -9:
                     me.speedy = -9
-
+        if tbne == 0:
+            obs = obs + [Butcher(randrange(1,30),randrange(1,30),randrange(1,3),randrange(1,3))]
+            tbne = 100
         # timestep
 
         for ob in obs:
@@ -150,7 +171,7 @@ def game():
         me.time_step(wor)
 
         # draw stuff
-        screen.fill((132,245,56))
+        wor.draw(screen)
         for ob in obs:
             ob.draw(screen)
         me.draw(screen)
@@ -158,8 +179,8 @@ def game():
 
 
         pygame.display.flip()
-        if invun >0:
-            invun -=1
+        if me.invun >0:
+            me.invun -=1
             continue
 
 
@@ -168,9 +189,7 @@ def game():
             kill = overlap(me.r,ob.r)
             if kill:
                 HP = HP -1
-                me.speedx *= -1
-                me.speedy *= -1
-                invun = 100
+                me.invun = 100
             if HP == 0:
                 return score
 
@@ -178,7 +197,7 @@ def menu(score,highscore):
     screen_image = pygame.image.load("assets/menu_screen.png")
     while True:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: # Checks if the red button in the corner of the window is clicked
+            if event.type == pygame.QUIT:
                 pygame.quit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
@@ -192,8 +211,7 @@ def menu(score,highscore):
         else:
             a = " "
         if not score == 0:
-            message_display(screen,"Game Over! Score:{}    {}".format(math.floor(score),a),'Scratched Letters.ttf')
-            message_display(screen,"                                         Hiscore:{}".format(math.floor(highscore)),'unbatimato')
+            message_display(screen,"Game Over! Score:{}   Highscore:{}   {}".format(math.floor(score),math.floor(highscore),a),'Scratched Letters.ttf')
         pygame.display.flip()
 
 

@@ -1,4 +1,4 @@
-import pygame,math
+import pygame,math,pickle
 from random import randrange
 pygame.font.init()
 #r,g,b
@@ -208,23 +208,33 @@ def menu(score,highscore):
         #Do drawings
         screen.blit(screen_image,(0,0))
         if score > 100:
-            a="You win!"
+            a="Well Done"
         else:
             a = " "
-        if not score == 0:
+        if score > 0:
             message_display(screen,"Game Over! Score:{}   Highscore:{}   {}".format(math.floor(score),math.floor(highscore),a),'Scratched Letters.ttf')
+        elif highscore > 0:
+            message_display(screen,"Highscore:{}".format(math.floor(highscore)),'Scratched Letters.ttf')
+
         pygame.display.flip()
 
 
 def main():
     score = 0
     highscore = 0
+    try:
+        with open("highscore.txt",'rb')as f:
+            [highscore] = pickle.load(f)
+    except:
+        pass
     while True:
         if menu(score,highscore) == MenuJob.play:
             #PLay the game
             score = game()
             if score > highscore:
                 highscore = score
+                with open("highscore.txt",'wb')as f:
+                    pickle.dump([highscore],f,protocol=2)
         else:
             return
 

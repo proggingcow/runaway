@@ -1,3 +1,4 @@
+#! /bin/python3
 import pygame,math,pickle
 from random import randrange
 pygame.font.init()
@@ -5,7 +6,11 @@ pygame.font.init()
 
 from enum import Enum
 
-
+pic1=pygame.image.load("assets/story_pic_1.png")
+pic2=pygame.image.load("assets/story_pic_2.png")
+pic3=pygame.image.load("assets/story_pic_3.png")
+pic4=pygame.image.load("assets/story_pic_4.png")
+pic5=pygame.image.load("assets/story_pic_5.png")
 pic_cow_run = pygame.image.load("assets/cowontherun.png")
 pic_cow_hurt =pygame.image.load("assets/hurtcowontherun.png")
 pic_butcher= pygame.image.load("assets/butcher.png")
@@ -17,6 +22,7 @@ background = pygame.image.load("assets/background.png")
 class MenuJob(Enum):
     quit = 0
     play = 1
+    story = 2
 
 
 def overlap(a,b):
@@ -108,8 +114,18 @@ def message_display(screen,text,font):
 screen =  pygame.display.set_mode((500,500))
 pygame.display.set_caption("runaway")
 
-
-
+def story():
+        piclist = [pic1,pic2,pic3,pic4,pic5]
+        for pic in piclist:
+            screen.blit(pic,(0,0))
+            pygame.display.flip()
+            swichinue = True
+            while swichinue:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT: # Checks if the red button in the corner of the window is clicked
+                        pygame.quit()
+                    if event.type == pygame.KEYDOWN:
+                        swichinue = not swichinue
 
 def game():
     wor = World(500,500)
@@ -205,6 +221,8 @@ def menu(score,highscore):
                     return MenuJob.quit
                 elif event.key == pygame.K_p:
                     return MenuJob.play
+                elif event.key ==pygame.K_s:
+                    return MenuJob.story
         #Do drawings
         screen.blit(screen_image,(0,0))
         if score > 100:
@@ -228,13 +246,17 @@ def main():
     except:
         pass
     while True:
-        if menu(score,highscore) == MenuJob.play:
+        job = menu(score,highscore)
+        if  job == MenuJob.play:
             #PLay the game
             score = game()
             if score > highscore:
                 highscore = score
                 with open("highscore.txt",'wb')as f:
                     pickle.dump([highscore],f,protocol=2)
+        elif job == MenuJob.story:
+            print("Story")
+            story()
         else:
             return
 

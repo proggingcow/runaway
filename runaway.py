@@ -18,7 +18,7 @@ background = pygame.image.load("assets/background.png")
 
 
 
-
+#Menu Job is used to decide where to go when menu closes
 class MenuJob(Enum):
     quit = 0
     play = 1

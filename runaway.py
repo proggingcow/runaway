@@ -223,6 +223,10 @@ def menu(score,highscore):
                     return MenuJob.play
                 elif event.key ==pygame.K_s:
                     return MenuJob.story
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                if pos < ((281,41)):
+                    return MenuJob.story
         #Do drawings
         screen.blit(screen_image,(0,0))
         if score > 100:

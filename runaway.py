@@ -143,6 +143,7 @@ class World:
         self.width = width
         self.hight = hight
         self.score = 0
+        self.obs = []
     def draw(self,screen):
         screen.blit(background,(0,0))
 
@@ -198,13 +199,13 @@ def story():
 def game():
     wor = World(500,500)
     n = 3
-    obs = []
+
     while n > 0.5:
         c = randrange(0.0,3.0)
         if c > 1.3:
-            obs = obs + [Butcher(randrange(1,300),randrange(1,300),randrange(1,3),randrange(1,3))]
+            wor.obs += [Butcher(randrange(1,300),randrange(1,300),randrange(1,3),randrange(1,3))]
         else:
-            obs = obs + [Mage(PMage,randrange(1,300),randrange(1,300),randrange(1,3),randrange(1,3))]
+            wor.obs += [Mage(PMage,randrange(1,300),randrange(1,300),randrange(1,3),randrange(1,3))]
         n -= 1
     me = Person(400,400)
     pause = False
@@ -212,7 +213,7 @@ def game():
     HP = 3
     invun = 0
     tbne = 100.5
-    coins = []
+
     while True:
         pygame.time.delay(50)
 
@@ -221,7 +222,7 @@ def game():
             second += 0.05
             wor.score += 0.05
             tbne -= 0.5
-            for ob in obs:
+            for ob in wor.obs:
                 #score depleter
                 if overlap(me.r,ob.r) and ob.tp != "c":wor.score -= 0.1
             if me.speedy>5 or me.speedy<-5:wor.score -= 0.1
@@ -262,67 +263,69 @@ def game():
             if tbne <= 0:
                 choose = randrange(0,10)
                 if 3.5 < choose < 4.5:
-                    obs = obs + [Mage(PMage,randrange(1,30),randrange(1,30),randrange(1,3),randrange(1,3))]
+                    wor.obs += [Mage(PMage,randrange(1,30),randrange(1,30),randrange(1,3),randrange(1,3))]
                 else:
-                    obs = obs + [Butcher(randrange(1,30),randrange(1,30),randrange(1,3),randrange(1,3))]
+                    wor.obs += [Butcher(randrange(1,30),randrange(1,30),randrange(1,3),randrange(1,3))]
                 tbne = 100.5
             coinadd = random.randint(1,40)
             if coinadd <1.5:
-                coins += [Coin(random.randint(1,480),random.randint(1,480))]
-            obs,coins = timestep_game(me,obs,wor,coins)
+                wor.obs += [Coin(random.randint(1,480),random.randint(1,480))]
+            timestep_game(me,wor)
             if me.HP == 0:
                 return wor.score
-        draw_game(me,obs,wor,pause,coins)
+        draw_game(me,wor,pause)
 
-def draw_game(me,obs,wor,pause,coins):
+def draw_game(me,wor,pause):
     # draw stuff
     wor.draw(screen)
-    for ob in obs + coins:
+    for ob in wor.obs:
         ob.draw(screen)
     me.draw(screen)
     if not pause:message_display(screen,"score = {}  HP = {}".format(math.floor(wor.score),me.HP),'unbatimato')
     else:message_display(screen,"score = {}  HP = {}  Paused  speed = {},{}".format(math.floor(wor.score),me.HP,me.speedx,-me.speedy),'unbatimato')
     pygame.display.flip()
 
-def timestep_game(me,obs,wor,coins):
-    for ob in obs + coins:
+def timestep_game(me,wor):
+    for ob in wor.obs:
         ob.time_step(wor)
 
     me.time_step(wor)
 
-    for coin in coins:
-        if overlap(me.r,coin.r):
-            coin.dead= True
-            wor.score += 5
+
             #ps
 
-    for ob in obs:
-        if ob:
-            tp = ob.tp
-            if tp == "p":
-                for Ob in obs:
-                    if Ob:
-                        if Ob.tp == "b" and overlap(ob.r,Ob.r):
-                            Ob.dead = True
-                            ob.dead = True
-            elif tp == "m":
-                ob.pour(obs)
+    for ob_a in wor.obs:
+        tp_a = ob_a.tp
+        if tp_a == "p" or tp_a == "c":
+            for ob_b in wor.obs:
+                if overlap(ob_a.r,ob_b.r):
+                    if ob_a.tp == "p" and ( ob_b.tp == "b" or ob_b.tp =="c"):
+                        ob_b.dead = True
+                        ob_a.dead = True
+                    if ob_a.tp == "c" and ob_b.tp != "c":
+                        ob_a.dead = True
+
+        elif tp_a == "m":
+            ob_a.pour(wor.obs)
 
     #kill Objects
-    obs = [x for x in obs if not x.dead ]
-    coins = [x for x in coins if not x.dead ]
+    wor.obs = [x for x in wor.obs if not x.dead ]
+
 
     if me.invun >0:
         me.invun -=1
-        return obs,coins
+
     #kill me
-    for ob in obs:
-        kill = overlap(me.r,ob.r)
-        if kill and ob.tp != "c":
-            me.HP = me.HP -1
-            if ob.tp == "p":ob.dead = True
-            me.invun = 100
-    return obs,coins
+    for ob in wor.obs:
+        if overlap(me.r,ob.r):
+            if ob.tp == "c":
+                ob.dead= True
+                wor.score += 5
+            elif me.invun <= 0:
+                me.HP = me.HP -1
+                if ob.tp == "p":ob.dead = True
+                me.invun = 100
+    return
 
 def menu(score,highscore,new):
     screen_image = pygame.image.load("assets/menu_screen.png")
